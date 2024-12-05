@@ -1,3 +1,17 @@
+# Reinforcement Learning: Foundation and Methods Class project.
+
+This repository contains the code necessary for my class project for MIT 6.790 RL class. The project is based on the work of [Tennant, Hailes, and Musolesi, 2023](https://doi.org/10.24963/ijcai.2023/36), but makes the following additions:
+
+- consider's other models of 'intrinsic' moral reward such as:
+     - contractarianism / mutual benefit / nash product
+     - universalization
+     - Weighted / trade-off utilitarianism
+- extending the state space to include player actions from more previous rounds. Given the importance of previous rounds for the development of cooperation, and that such information is often available in the real world, This will allow us to see how these different intrinsic moral rewards relate to behaviour in more ecologically valid settings. 
+- Possibly including more games, such as a matching game with a larger action space.
+
+The original README from the orignal repository (which I have forked for this analyses) appears below: 
+
+--------
 # Modeling Moral Choice in (Dyadic) Social Dilemmas with Multi-Agent Reinforcement Learning
 
 This repository contains implementation and analysis code for the following paper: 
