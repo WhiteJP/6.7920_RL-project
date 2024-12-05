@@ -72,9 +72,16 @@ class Player:
         pay2 = payoffs[1]
 
         k = 5 #the constant that defines reward & punishment values for norm-based agents 
+        wtr = 0.5 # the welfare-tradeoff ratio. How much you weight the welfare of the other player vs your own welfare.
         
         if self.moral_type == 'Utilitarian':
             pay1_intrinsic = pay1 + pay2
+
+        elif self.moral_type == 'Weighted Utilitarian':
+            pay1_intrinsic = pay1 + wtr*pay2 
+
+        elif self.moral_type == 'Contractarian':
+            pay1_intrinsic = pay1*pay2 #multiply the payoffs of the two players (externally)
             
         elif self.moral_type == 'Deontological':
             #check if I followed the norm conditional cooperation

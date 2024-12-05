@@ -51,8 +51,8 @@ def reset_learning_parameters(counter, destination_folder, RNG):
     return alpha0, decay, gamma, state_player1, state_player2
 
 def create_pair_of_players(title1, title2, num_runs):
-    strategy_mapping = {'AC':'AlwaysCooperate', 'AD':'AlwaysDefect', 'TFT':'TitForTat', 'Random':'random', 'QLS':'Q-Learning eps-greedy', 'QLUT':'Q-Learning eps-greedy', 'QLDE':'Q-Learning eps-greedy', 'QLVE_e':'Q-Learning eps-greedy', 'QLVE_k':'Q-Learning eps-greedy', 'QLVM':'Q-Learning eps-greedy'}
-    moral_mapping = {'AC':None, 'AD':None, 'TFT':None, 'Random':None, 'QLS':None, 'QLUT':'Utilitarian', 'QLDE':'Deontological', 'QLVE_e':'VirtueEthics_equality', 'QLVE_k':'VirtueEthics_kindness', 'QLVM':'VirtueEthics_mixed'}
+    strategy_mapping = {'AC':'AlwaysCooperate', 'AD':'AlwaysDefect', 'TFT':'TitForTat', 'Random':'random', 'QLS':'Q-Learning eps-greedy', 'QLUT':'Q-Learning eps-greedy', 'QLWUT':'Q-Learning eps-greedy', 'QLNP':'Q-Learning eps-greedy', 'QLDE':'Q-Learning eps-greedy', 'QLVE_e':'Q-Learning eps-greedy', 'QLVE_k':'Q-Learning eps-greedy', 'QLVM':'Q-Learning eps-greedy'}
+    moral_mapping = {'AC':None, 'AD':None, 'TFT':None, 'Random':None, 'QLS':None, 'QLUT':'Utilitarian', 'QLWUT':'Weighted Utilitarian', 'QLNP':'Contractarian', 'QLDE':'Deontological', 'QLVE_e':'VirtueEthics_equality', 'QLVE_k':'VirtueEthics_kindness', 'QLVM':'VirtueEthics_mixed'}
 
     pairs_of_players = [
         (Player(strategy=strategy_mapping[title1], moral_type=moral_mapping[title1], eps0=eps0, epsdecay=epsdecay, mixed_beta=mixed_beta), 
