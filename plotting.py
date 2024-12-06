@@ -740,7 +740,7 @@ def plot_one_run_Q_values(Q_values_list, run_idx):
     #then export the interactive outupt / single plot as pdf/html to store the results compactly 
 
 
-title_mapping = {'AC':'AlwaysCooperate', 'AD':'AlwaysDefect', 'TFT':'TitForTat', 'Random':'random', 'QLS':'Selfish', 'QLUT':'Utilitarian', 'QLDE':'Deontological', 'QLVE_e':'VirtueEthics_equality', 'QLVE_k':'VirtueEthics_kindness', 'QLVM':'VirtueEthics_mixed'}
+title_mapping = {'AC':'AlwaysCooperate', 'AD':'AlwaysDefect', 'TFT':'TitForTat', 'Random':'random', 'QLS':'Selfish', 'QLUT':'Utilitarian', 'QLDE':'Deontological', 'QLVE_e':'VirtueEthics_equality', 'QLVE_k':'VirtueEthics_kindness', 'QLVM':'VirtueEthics_mixed', 'QLNP': 'Contractarian', 'QLWUT':"WeightedUtilitarian"}
 
 def plot_action_pairs(destination_folder, player1_title, player2_title, n_runs, option=None):
     '''visualise action types that each individual player takes against their opponent's last move 
@@ -846,6 +846,7 @@ def plot_action_pairs_20K(destination_folder, player1_title, player2_title, n_ru
             os.makedirs('results/outcome_plots/actions')
 
     if not option: #if plotting main results
+        #print(destination_folder.split())
         pair = destination_folder.split('/')[1]
 
     else: #if plotting extra parameter search for beta in QLVM 
@@ -1640,11 +1641,31 @@ def plot_relative_action_pairs(player1_title, n_runs):
 
 
 def plot_relative_outcomes(type, player1_title, n_runs, game_title):
-    '''plot different types of social outcoes - collective / gini / min (game) reward for different pairs'''    
+    '''plot different types of social outcomes - collective / gini / min (game) reward for different pairs'''    
     ##################################
     #### cumulative - {type} game reward for player1_tytle vs others  ####
     ##################################
-    against_QLS = pd.read_csv(f'results/{player1_title}_QLS/df_cumulative_reward_{type}.csv', index_col=0)
+
+    try:
+        against_QLWUT = pd.read_csv(f'results/{player1_title}_QLWUT/df_cumulative_reward_{type}.csv', index_col=0)
+    except:
+        against_QLWUT = pd.read_csv(f'results/QLWUT_{player1_title}/df_cumulative_reward_{type}.csv', index_col=0)
+    against_QLWUT_means = against_QLWUT.mean(axis=1)
+    against_QLWUT_sds = against_QLWUT.std(axis=1)
+    against_QLWUT_ci = 1.96 * against_QLWUT_sds/np.sqrt(n_runs)
+
+    try:
+        against_QLNP = pd.read_csv(f'results/{player1_title}_QLNP/df_cumulative_reward_{type}.csv', index_col=0)
+    except:
+        against_QLNP = pd.read_csv(f'results/QLNP_{player1_title}/df_cumulative_reward_{type}.csv', index_col=0)
+    against_QLNP_means = against_QLNP.mean(axis=1)
+    against_QLNP_sds = against_QLNP.std(axis=1)
+    against_QLNP_ci = 1.96 * against_QLNP_sds/np.sqrt(n_runs)
+
+    try:
+        against_QLS = pd.read_csv(f'results/{player1_title}_QLS/df_cumulative_reward_{type}.csv', index_col=0)
+    except:
+        against_QLS = pd.read_csv(f'results/QLS_{player1_title}/df_cumulative_reward_{type}.csv', index_col=0)
     against_QLS_means = against_QLS.mean(axis=1)
     against_QLS_sds = against_QLS.std(axis=1)
     against_QLS_ci = 1.96 * against_QLS_sds/np.sqrt(n_runs)
@@ -1693,8 +1714,12 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     plt.rcParams.update({'font.size':20})
     plt.plot(against_QLS.index[:], against_QLS_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_S', color='red')
     plt.fill_between(against_QLS.index[:], against_QLS_means-against_QLS_ci, against_QLS_means+against_QLS_ci, facecolor='#ff9999', alpha=0.5)
+    plt.plot(against_QLWUT.index[:], against_QLWUT_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_WUT', color='gray')
+    plt.fill_between(against_QLWUT.index[:], against_QLWUT_means-against_QLWUT_ci, against_QLWUT_means+against_QLWUT_ci, facecolor='gray', alpha=0.5)
     plt.plot(against_QLUT.index[:], against_QLUT_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_UT', color='#556b2f')
     plt.fill_between(against_QLUT.index[:], against_QLUT_means-against_QLUT_ci, against_QLUT_means+against_QLUT_ci, facecolor='#ccff99', alpha=0.5)
+    plt.plot(against_QLNP.index[:], against_QLNP_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_NP', color='black')
+    plt.fill_between(against_QLNP.index[:], against_QLNP_means-against_QLNP_ci, against_QLNP_means+against_QLNP_ci, facecolor='black', alpha=0.5)
     plt.plot(against_QLDE.index[:], against_QLDE_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_DE', color='#00cccc')
     plt.fill_between(against_QLDE.index[:], against_QLDE_means-against_QLDE_ci, against_QLDE_means+against_QLDE_ci, facecolor='#99ffff', alpha=0.5)
     plt.plot(against_QLVE_e.index[:], against_QLVE_e_means[:], lw=0.8, alpha=0.5, label=f'{player1_title}_'+r'$VE_e$', color='orange')
@@ -1705,27 +1730,12 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     plt.fill_between(against_QLVM.index[:], against_QLVM_means-against_QLVM_ci, against_QLVM_means+against_QLVM_ci, facecolor='pink', alpha=0.5)
     long_title = title_mapping[player1_title].replace('Ethics','').replace('_','-')
     plt.title(long_title +' vs other \n') #r'Cumulative '+type+' Reward (Mean '+r'$\pm$ 95% CI over ' +str(n_runs)+' runs), '+'\n'+ 
-    if game_title=='IPD':
-        if type=='collective':
-            plt.gca().set_ylim([0, 60000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 30000])
-    elif game_title=='VOLUNTEER':
-        if type=='collective': 
-            plt.gca().set_ylim([0, 80000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 40000])
-    elif game_title=='STAGHUNT': 
-        if type=='collective': 
-            plt.gca().set_ylim([0, 100000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 40000])  
+    if type=='collective':
+        plt.gca().set_ylim([0, 60000])
+    elif type=='gini':
+        plt.gca().set_ylim([0, 10000])
+    elif type=='min':
+        plt.gca().set_ylim([0, 30000])
     plt.ylabel(f'$G_{{{type}}}$') #Cumulative
     plt.xlabel('Iteration')
     #plt.xticks(rotation=45)
@@ -1738,7 +1748,7 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     #plt.savefig(f'results/outcome_plots/group_outcomes/cumulative_{type}_reward_{player1_title}.png', bbox_inches='tight')
 
     
-
+                       
     
 
     ######################################
@@ -1795,33 +1805,19 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     plt.rcParams.update({'font.size':20})
     ax = fig.add_axes([0,0,1,1])
     #labels = ['vs_S', 'vs_UT', 'vs_DE', 'vs_'+r'$VE_e$', 'vs_'+r'$VE_k$']
-    labels = ['S', 'UT', 'DE', 'VE'+r'$_e$', 'VE'+r'$_k$', 'VE'+r'$_m$']
+    labels = ['S', 'UT', 'WUT', 'CT', 'DE', 'VE'+r'$_e$', 'VE'+r'$_k$', 'VE'+r'$_m$']
     means = [against_QLS_means,against_QLUT_means,against_QLDE_means,against_QLVE_e_means,against_QLVE_k_means,against_QLVM_means]
     cis = [against_QLS_ci,against_QLUT_ci,against_QLDE_ci,against_QLVE_e_ci,against_QLVE_k_ci,against_QLVM_ci]
     colors = ['red', '#556b2f', '#00cccc', 'orange', 'purple', 'pink']
     ax.bar(labels, means, yerr=cis, capsize=7, color=colors)
     ax.set_title(long_title +' vs other \n') #r'Cumulative '+type+' Reward (Mean '+r'$\pm$ 95% CI over ' +str(n_runs)+' runs), '+'\n'+ 
-    if game_title=='IPD':
-        if type=='collective':
-            plt.gca().set_ylim([0, 60000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 30000])
-    elif game_title=='VOLUNTEER':
-        if type=='collective': 
-            plt.gca().set_ylim([0, 80000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 40000])
-    elif game_title=='STAGHUNT': 
-        if type=='collective': 
-            plt.gca().set_ylim([0, 100000])
-        elif type=='gini':
-            plt.gca().set_ylim([0, 10000])
-        elif type=='min':
-            plt.gca().set_ylim([0, 40000])  
+    if type=='collective':
+        plt.gca().set_ylim([0, 60000])
+    elif type=='gini':
+        plt.gca().set_ylim([0, 10000])
+    elif type=='min':
+        plt.gca().set_ylim([0, 30000])
+
     ax.set_ylabel(f'$G_{{{type}}}$') #Cumulative
     ax.set_xlabel('Opponent type')
     #plt.xticks(rotation=45)
@@ -1907,22 +1903,11 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     plt.title(long_title +' vs other \n') #type+r' Reward (Mean '+r'$\pm$ 95% CI over ' +str(n_runs)+' runs), '+'\n'+ 
     if type=='gini':
         plt.gca().set_ylim([0, 1])
+    elif  type=='collective':
+        plt.gca().set_ylim([4, 6])
+    elif type=='min':
+        plt.gca().set_ylim([1, 3])
 
-    if game_title=='IPD':
-        if type=='collective':
-            plt.gca().set_ylim([4, 6])
-        elif type=='min':
-            plt.gca().set_ylim([1, 3])
-    elif game_title=='VOLUNTEER':
-        if type=='collective': 
-            plt.gca().set_ylim([2, 8])
-        elif type=='min':
-            plt.gca().set_ylim([1, 4])
-    elif game_title=='STAGHUNT': 
-        if type=='collective': 
-            plt.gca().set_ylim([4, 10])
-        elif type=='min':
-            plt.gca().set_ylim([1, 5])
     plt.ylabel(f'$G_{{{type}}}$')
     plt.xlabel('Iteration')
     #leg = plt.legend(fontsize=14, labels=['vs QLS', 'vs QLUT', 'vs QLDE', r'vs QLVE$_e$', r'vs QLVE$_k$']) # get the legend object
@@ -2003,7 +1988,10 @@ def create_legend():
 
 
 def plot_relative_cooperation(player1_title, n_runs): 
-    actions_against_QLS = pd.read_csv(f'results/{player1_title}_QLS/player1/action.csv', index_col=0)
+    try:
+        actions_against_QLS = pd.read_csv(f'results/{player1_title}_QLS_eps01.0_epsdecay/player1/action.csv', index_col=0)
+    except:
+        actions_against_QLS = pd.read_csv(f'results/QLS_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
     #calculate % of 100 agents (runs) that cooperate at every step  out of the 10000
     actions_against_QLS['%_defect'] = actions_against_QLS[actions_against_QLS[:]==1].count(axis='columns')
     actions_against_QLS['%_cooperate'] = n_runs-actions_against_QLS['%_defect']
@@ -2011,44 +1999,66 @@ def plot_relative_cooperation(player1_title, n_runs):
     actions_against_QLS['%_cooperate'] = (actions_against_QLS['%_cooperate']/n_runs)*100
 
     try:
-        actions_against_QLUT = pd.read_csv(f'results/{player1_title}_QLUT/player1/action.csv', index_col=0)
+        actions_against_QLUT = pd.read_csv(f'results/{player1_title}_QLUT_eps01.0_epsdecay/player1/action.csv', index_col=0)
     except:
-        actions_against_QLUT = pd.read_csv(f'results/QLUT_{player1_title}/player2/action.csv', index_col=0)
+        actions_against_QLUT = pd.read_csv(f'results/QLUT_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
     actions_against_QLUT['%_defect'] = actions_against_QLUT[actions_against_QLUT[:]==1].count(axis='columns')
     actions_against_QLUT['%_cooperate'] = n_runs-actions_against_QLUT['%_defect']
     actions_against_QLUT['%_defect'] = (actions_against_QLUT['%_defect']/n_runs)*100
     actions_against_QLUT['%_cooperate'] = (actions_against_QLUT['%_cooperate']/n_runs)*100
 
     try:
-        actions_against_QLDE = pd.read_csv(f'results/{player1_title}_QLDE/player1/action.csv', index_col=0)
+        actions_against_QLDE = pd.read_csv(f'results/{player1_title}_QLDE_eps01.0_epsdecay/player1/action.csv', index_col=0)
     except:
-        actions_against_QLDE = pd.read_csv(f'results/QLDE_{player1_title}/player2/action.csv', index_col=0)
+        actions_against_QLDE = pd.read_csv(f'results/QLDE_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
     actions_against_QLDE['%_defect'] = actions_against_QLDE[actions_against_QLDE[:]==1].count(axis='columns')
     actions_against_QLDE['%_cooperate'] = n_runs-actions_against_QLDE['%_defect']
     actions_against_QLDE['%_defect'] = (actions_against_QLDE['%_defect']/n_runs)*100
     actions_against_QLDE['%_cooperate'] = (actions_against_QLDE['%_cooperate']/n_runs)*100
 
     try:
-        actions_against_QLVE_e = pd.read_csv(f'results/{player1_title}_QLVE_e/player1/action.csv', index_col=0)
+        actions_against_QLVE_e = pd.read_csv(f'results/{player1_title}_QLVE_e_eps01.0_epsdecay/player1/action.csv', index_col=0)
     except:
-        actions_against_QLVE_e = pd.read_csv(f'results/QLVE_e_{player1_title}/player2/action.csv', index_col=0)
+        actions_against_QLVE_e = pd.read_csv(f'results/QLVE_e_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
     actions_against_QLVE_e['%_defect'] = actions_against_QLVE_e[actions_against_QLVE_e[:]==1].count(axis='columns')
     actions_against_QLVE_e['%_cooperate'] = n_runs-actions_against_QLVE_e['%_defect']
     actions_against_QLVE_e['%_defect'] = (actions_against_QLVE_e['%_defect']/n_runs)*100
     actions_against_QLVE_e['%_cooperate'] = (actions_against_QLVE_e['%_cooperate']/n_runs)*100
 
     try:
-        actions_against_QLVE_k = pd.read_csv(f'results/{player1_title}_QLVE_k/player1/action.csv', index_col=0)
+        actions_against_QLVE_k = pd.read_csv(f'results/{player1_title}_QLVE_k_eps01.0_epsdecay/player1/action.csv', index_col=0)
     except:
-        actions_against_QLVE_k = pd.read_csv(f'results/QLVE_k_{player1_title}/player2/action.csv', index_col=0)
+        actions_against_QLVE_k = pd.read_csv(f'results/QLVE_k_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
     actions_against_QLVE_k['%_defect'] = actions_against_QLVE_k[actions_against_QLVE_k[:]==1].count(axis='columns')
     actions_against_QLVE_k['%_cooperate'] = n_runs-actions_against_QLVE_k['%_defect']
     actions_against_QLVE_k['%_defect'] = (actions_against_QLVE_k['%_defect']/n_runs)*100
     actions_against_QLVE_k['%_cooperate'] = (actions_against_QLVE_k['%_cooperate']/n_runs)*100
 
+    #contratarian - nash product QLNP
+    try:
+        actions_against_QLNP= pd.read_csv(f'results/{player1_title}_QLNP_eps01.0_epsdecay/player1/action.csv', index_col=0)
+    except:
+        actions_against_QLNP = pd.read_csv(f'results/QLNP_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
+    actions_against_QLNP['%_defect'] = actions_against_QLNP[actions_against_QLNP[:]==1].count(axis='columns')
+    actions_against_QLNP['%_cooperate'] = n_runs-actions_against_QLNP['%_defect']
+    actions_against_QLNP['%_defect'] = (actions_against_QLNP['%_defect']/n_runs)*100
+    actions_against_QLNP['%_cooperate'] = (actions_against_QLNP['%_cooperate']/n_runs)*100
+
+    #Weighted Utilitarian
+    try:
+        actions_against_QLWUT= pd.read_csv(f'results/{player1_title}_QLNP_eps01.0_epsdecay/player1/action.csv', index_col=0)
+    except:
+        actions_against_QLWUT = pd.read_csv(f'results/QLWUT_{player1_title}_eps01.0_epsdecay/player2/action.csv', index_col=0)
+    actions_against_QLWUT['%_defect'] = actions_against_QLWUT[actions_against_QLWUT[:]==1].count(axis='columns')
+    actions_against_QLWUT['%_cooperate'] = n_runs-actions_against_QLWUT['%_defect']
+    actions_against_QLWUT['%_defect'] = (actions_against_QLWUT['%_defect']/n_runs)*100
+    actions_against_QLWUT['%_cooperate'] = (actions_against_QLWUT['%_cooperate']/n_runs)*100
+
     #plot results 
     plt.figure(dpi=80) #figsize=(10, 6), 
     colors = ['red', '#556b2f', '#00cccc', 'orange', 'purple']
+    plt.plot(actions_against_QLNP.index[:], actions_against_QLNP['%_cooperate'], lw=0.1, alpha=0.5, label=f'{player1_title} vs. QLS', color=colors[0])
+    plt.plot(actions_against_QLWUT.index[:], actions_against_QLWUT['%_cooperate'], lw=0.1, alpha=0.5, label=f'{player1_title} vs. QLS', color=colors[0])
     plt.plot(actions_against_QLS.index[:], actions_against_QLS['%_cooperate'], lw=0.1, alpha=0.5, label=f'{player1_title} vs. QLS', color=colors[0])
     plt.plot(actions_against_QLUT.index[:], actions_against_QLUT['%_cooperate'], lw=0.1, alpha=0.5, label=f'{player1_title} vs. QLUT', color=colors[1])
     plt.plot(actions_against_QLDE.index[:], actions_against_QLDE['%_cooperate'], lw=0.1, alpha=0.5, label=f'{player1_title} vs. QLDE', color=colors[2])
