@@ -1805,7 +1805,7 @@ def plot_relative_outcomes(type, player1_title, n_runs, game_title):
     plt.rcParams.update({'font.size':20})
     ax = fig.add_axes([0,0,1,1])
     #labels = ['vs_S', 'vs_UT', 'vs_DE', 'vs_'+r'$VE_e$', 'vs_'+r'$VE_k$']
-    labels = ['S', 'UT', 'WUT', 'CT', 'DE', 'VE'+r'$_e$', 'VE'+r'$_k$', 'VE'+r'$_m$']
+        
     means = [against_QLS_means,against_QLUT_means,against_QLDE_means,against_QLVE_e_means,against_QLVE_k_means,against_QLVM_means]
     cis = [against_QLS_ci,against_QLUT_ci,against_QLDE_ci,against_QLVE_e_ci,against_QLVE_k_ci,against_QLVM_ci]
     colors = ['red', '#556b2f', '#00cccc', 'orange', 'purple', 'pink']
@@ -4030,3 +4030,80 @@ n_runs = 100
 short_titles = destination_folder.split('/')[1].split('_')[0:2]
 long_titles = [title_mapping[title] for title in short_titles]
 plot_results(destination_folder = destination_folder, player1_title=long_titles[0], player2_title=long_titles[1], n_runs=n_runs, game_title=game_title) 
+
+
+def plot_relative_outcomes(type, player1_title, n_runs, game_title):
+    '''Plot different types of social outcomes - collective / gini / min (game) reward for different pairs'''
+    
+    def get_data(player1_title, opponent, type):
+        try:
+            df = pd.read_csv(f'results/{player1_title}_{opponent}/df_cumulative_reward_{type}.csv', index_col=0)
+        except:
+            df = pd.read_csv(f'results/{opponent}_{player1_title}/df_cumulative_reward_{type}.csv', index_col=0)
+        means = df.mean(axis=1)
+        sds = df.std(axis=1)
+        ci = 1.96 * sds / np.sqrt(n_runs)
+        return df, means, sds, ci
+
+    def get_bar_data(player1_title, opponent, type):
+        try:
+            df = pd.read_csv(f'results/{player1_title}_{opponent}/df_cumulative_reward_{type}.csv', index_col=0).iloc[-1]
+        except:
+            df = pd.read_csv(f'results/{opponent}_{player1_title}/df_cumulative_reward_{type}.csv', index_col=0).iloc[-1]
+        mean = df.mean()
+        sd = df.std()
+        ci = 1.96 * sd / np.sqrt(n_runs)
+        return mean, ci
+
+    # Define opponents and their corresponding labels
+    opponents = ['QLS', 'QLUT', 'QLWUT', 'QLNP', 'QLDE', 'QLVE_e', 'QLVE_k', 'QLVM']
+    labels = ['S', 'UT', 'WUT', 'CT', 'DE', 'VE'+r'$_e$', 'VE'+r'$_k$', 'VE'+r'$_m$']
+
+    # Colors for the opponents
+    colors = {
+        'QLS': 'red', 'QLUT': '#556b2f', 'QLWUT': 'gray', 'QLNP': 'black',
+        'QLDE': '#00cccc', 'QLVE_e': 'orange', 'QLVE_k': 'purple', 'QLVM': 'palevioletred'
+    }
+
+    # Prepare data for line plots
+    data = {opponent: get_data(player1_title, opponent, type) for opponent in opponents}
+
+    # Line Plot
+    plt.figure(dpi=80, figsize=(5, 4))
+    plt.rcParams.update({'font.size': 20})
+    for opponent, (df, means, sds, ci) in data.items():
+        plt.plot(df.index, means, lw=0.8, alpha=0.5, label=f'{player1_title}_{opponent}', color=colors[opponent])
+        plt.fill_between(df.index, means - ci, means + ci, alpha=0.5, color=colors[opponent])
+
+    # Set titles and labels
+    plt.title(f"{title_mapping[player1_title].replace('Ethics', '').replace('_', '-')} vs other")
+    plt.xlabel('Iteration')
+    plt.ylabel(f'$G_{{{type}}}$')
+    if type == 'collective':
+        plt.ylim([0, 60000])
+    elif type == 'gini':
+        plt.ylim([0, 10000])
+    elif type == 'min':
+        plt.ylim([0, 30000])
+
+    # Save the line plot
+    if not os.path.isdir('results/outcome_plots/group_outcomes'):
+        os.makedirs('results/outcome_plots/group_outcomes')
+    plt.savefig(f'results/outcome_plots/group_outcomes/cumulative_{type}_reward_{player1_title}.png', bbox_inches='tight')
+
+    # Bar Plot
+    bar_means, bar_cis = zip(*[get_bar_data(player1_title, opponent, type) for opponent in opponents])
+    plt.figure(figsize=(3, 3), dpi=80)
+    plt.bar(labels, bar_means, yerr=bar_cis, capsize=7, color=[colors[opp] for opp in opponents])
+    plt.title(f"{title_mapping[player1_title].replace('Ethics', '').replace('_', '-')} vs other")
+    plt.xlabel('Opponent type')
+    plt.ylabel(f'$G_{{{type}}}$')
+    if type == 'collective':
+        plt.ylim([0, 60000])
+    elif type == 'gini':
+        plt.ylim([0, 10000])
+    elif type == 'min':
+        plt.ylim([0, 30000])
+
+    plt.xticks(fontsize=10)
+    plt.savefig(f'results/outcome_plots/group_outcomes/bar_cumulative_{type}_reward_{player1_title}.pdf', bbox_inches='tight')
